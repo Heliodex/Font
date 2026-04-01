@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glyph name="S" format="2">
+	<advance width="110" />
+	<unicode hex="0053" />
+	<outline>
+		<contour>
+			<point x="35" y="160" type="qcurve" />
+			<point x="85" y="160" type="line" />
+			<point x="85" y="142" type="line" />
+			<point x="35" y="142" type="line" />
+			<point x="19" y="142" />
+			<point x="19" y="127" type="qcurve" />
+			<point x="19" y="103" type="line" />
+			<point x="19" y="92" />
+			<point x="35" y="90" type="qcurve" />
+			<point x="45" y="90" type="line" />
+			<point x="45" y="72" type="line" />
+			<point x="35" y="72" type="line" />
+			<point x="0" y="74" />
+			<point x="0" y="103" type="qcurve" />
+			<point x="0" y="127" type="line" />
+			<point x="0" y="142" />
+			<point x="20" y="160" />
+		</contour>
+		<contour>
+			<point x="55" y="0" type="qcurve" />
+			<point x="5" y="0" type="line" />
+			<point x="5" y="18" type="line" />
+			<point x="55" y="18" type="line" />
+			<point x="71" y="18" />
+			<point x="71" y="33" type="qcurve" />
+			<point x="71" y="59" type="line" />
+			<point x="71" y="72" />
+			<point x="55" y="72" type="qcurve" />
+			<point x="45" y="72" type="line" />
+			<point x="45" y="90" type="line" />
+			<point x="55" y="90" type="line" />
+			<point x="90" y="90" />
+			<point x="90" y="59" type="qcurve" />
+			<point x="90" y="33" type="line" />
+			<point x="90" y="18" />
+			<point x="70" y="0" />
+		</contour>
+	</outline>
+</glyph>
