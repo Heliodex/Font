@@ -1,25 +1,14 @@
 import { readdir } from "node:fs/promises"
-import { type SVGCommand, SVGPathData, SVGPathDataParser } from "svg-pathdata"
+import { type CommandL, type SVGCommand, SVGPathData } from "svg-pathdata"
 import { fromXml } from "xast-util-from-xml"
-import { Font, Glyph, Path } from "./opentype.js/src/opentype.mjs"
 
-const glyphs: Glyph[] = []
 const glyphsPath = "./glyphs"
 
-function round2dp(n: number) {
-	return Math.round(n * 100) / 100
-}
+const types = {}
 
-function roundCmd(cmd: SVGCommand): SVGCommand {
-	const ncmd = cmd as { [_: string]: boolean | number }
-
-	for (const k in ncmd)
-		if (typeof ncmd[k] === "number")
-			// round to 2 decimal places
-			ncmd[k] = round2dp(ncmd[k])
-
-	return ncmd as SVGCommand
-}
+const excludeTypes: number[] = [
+	SVGPathData.CLOSE_PATH, // no actual data
+]
 
 for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 	if (!dirent.isFile() || !dirent.name.endsWith(".svg")) continue
@@ -36,10 +25,7 @@ for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 		throw new Error("Expected svg element")
 
 	// wdc
-	const {
-		attributes: { width },
-		children,
-	} = node
+	const { children } = node
 
 	// filter out text nodes (mostly just newlines)
 	const cs = children.filter(c => c.type !== "text") as unknown as {
@@ -47,45 +33,56 @@ for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 	}[]
 	const paths = cs.map(c => c.attributes.d)
 
-	// console.log(`${width} x ${height}`)
-	// console.log(paths)
-	// console.log()
-
-	const fontPaths = []
+	const fontPaths: SVGCommand[][] = []
 
 	for (const p of paths) {
-		const np = new SVGPathData(p).transform(roundCmd).encode()
-		// console.log("rounded path\n", p, "\n", np)
+		if (!p) continue // might be ok if it's at the end, but sometimes appears in the middle O_O
 
-		fontPaths.push(Path.fromSVG(np, {}))
+		const pd = new SVGPathData(p)
+		if (!pd.commands)
+			throw new Error(`Expected commands from ${p}, got ${pd.commands}`)
+
+		const cmds = pd
+			.round(100)
+			.commands.filter(c => !excludeTypes.includes(c.type))
+
+		for (let i = 1; i < cmds.length; i++) {
+			const prev = cmds[i - 1]
+			if (!prev) continue
+			const cmd = cmds[i]
+			if (!cmd) continue
+
+			if (
+				prev.type !== SVGPathData.LINE_TO &&
+				prev.type !== SVGPathData.CURVE_TO &&
+				prev.type !== SVGPathData.MOVE_TO
+			)
+				continue
+
+			if (cmd.type === SVGPathData.HORIZ_LINE_TO)
+				cmds[i] = {
+					relative: false,
+					type: SVGPathData.LINE_TO,
+					x: cmd.x,
+					y: prev.y,
+				}
+			else if (cmd.type === SVGPathData.VERT_LINE_TO)
+				cmds[i] = {
+					relative: false,
+					type: SVGPathData.LINE_TO,
+					x: prev.x,
+					y: cmd.y,
+				}
+		}
+		// .filter(c => c.type === SVGPathData.MOVE_TO)
+
+		fontPaths.push(cmds)
+		for (const cmd of cmds) types[cmd.type] = true
 	}
 
 	const name = dirent.name.replace(/\.svg$/, "")
 
-	const advanceWidth = width ? +width : 0
-
-	const gl = new Glyph({
-		advanceWidth,
-		name,
-		path: fontPaths[0],
-	})
-
-	glyphs.push(gl)
+	// console.log(name, fontPaths)
 }
 
-const notdefGlyph = new Glyph({
-	name: ".notdef",
-	advanceWidth: 10,
-	path: new Path(),
-})
-
-const font = new Font({
-	familyName: "Dex Display",
-	styleName: "Regular",
-	unitsPerEm: 140,
-	ascender: 50,
-	descender: -40,
-	glyphs: [notdefGlyph, ...glyphs],
-})
-
-await Bun.write("out.otf", font.toArrayBuffer())
+console.log(types)
