@@ -1,5 +1,5 @@
 import { readdir } from "node:fs/promises"
-import { type CommandL, type SVGCommand, SVGPathData } from "svg-pathdata"
+import { type SVGCommand, SVGPathData } from "svg-pathdata"
 import { fromXml } from "xast-util-from-xml"
 
 const glyphsPath = "./glyphs"
