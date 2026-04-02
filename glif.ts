@@ -34,6 +34,12 @@ type Point = {
 	t?: "line" | "qcurve"
 }
 
+const baseline = 16
+
+function fixCoords({ x, y, t }: Point): Point {
+	return { x, y: baseline - y, t }
+}
+
 function getPoints(cmds: SVGCommand[]) {
 	// const pointstrings: string[] = []
 
@@ -60,7 +66,9 @@ function getPoints(cmds: SVGCommand[]) {
 				throw new Error(`Unexpected command type ${cmd.type}`)
 		}
 
-	return points.map(
+	const fixedPoints = points.map(fixCoords)
+
+	return fixedPoints.map(
 		({ x, y, t }) =>
 			`<point x="${round2dp(x * 10)}" y="${round2dp(y * 10)}" ${t ? `type="${t}" ` : ""}/>`
 	)
