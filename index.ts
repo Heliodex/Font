@@ -9,7 +9,34 @@ const types = {}
 
 const excludeTypes: number[] = [
 	SVGPathData.CLOSE_PATH, // no actual data
+	// SVGPathData.MOVE_TO, // don't exclude because needed for some H and V lines
 ]
+
+function fixCmd(prev: SVGCommand, cmd: SVGCommand): SVGCommand | undefined {
+	if (
+		prev.type !== SVGPathData.LINE_TO &&
+		prev.type !== SVGPathData.CURVE_TO &&
+		prev.type !== SVGPathData.MOVE_TO
+	)
+		return
+
+	if (cmd.type === SVGPathData.HORIZ_LINE_TO)
+		return {
+			relative: false,
+			type: SVGPathData.LINE_TO,
+			x: cmd.x,
+			y: prev.y,
+		}
+	if (cmd.type === SVGPathData.VERT_LINE_TO)
+		return {
+			relative: false,
+			type: SVGPathData.LINE_TO,
+			x: prev.x,
+			y: cmd.y,
+		}
+
+	return cmd
+}
 
 for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 	if (!dirent.isFile() || !dirent.name.endsWith(".svg")) continue
@@ -34,11 +61,12 @@ for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 	const cs = children.filter(c => c.type !== "text") as unknown as {
 		attributes: { d: string }
 	}[]
-	const paths = cs.map(c => c.attributes.d)
 
 	const fontPaths: SVGCommand[][] = []
 
-	for (const p of paths) {
+	const name = dirent.name.replace(/\.svg$/, "")
+
+	for (const p of cs.map(c => c.attributes.d)) {
 		if (!p) continue // might be ok if it's at the end, but sometimes appears in the middle O_O
 
 		const pd = new SVGPathData(p)
@@ -49,41 +77,18 @@ for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 			.round(100)
 			.commands.filter(c => !excludeTypes.includes(c.type))
 
-		for (let i = 1; i < cmds.length; i++) {
-			const prev = cmds[i - 1]
-			if (!prev) continue
+		const newCmds: SVGCommand[] = []
+		for (let i = 0; i < cmds.length; i++) {
 			const cmd = cmds[i]
 			if (!cmd) continue
+			const prev = newCmds[newCmds.length - 1]
 
-			if (
-				prev.type !== SVGPathData.LINE_TO &&
-				prev.type !== SVGPathData.CURVE_TO &&
-				prev.type !== SVGPathData.MOVE_TO
-			)
-				continue
-
-			if (cmd.type === SVGPathData.HORIZ_LINE_TO)
-				cmds[i] = {
-					relative: false,
-					type: SVGPathData.LINE_TO,
-					x: cmd.x,
-					y: prev.y,
-				}
-			else if (cmd.type === SVGPathData.VERT_LINE_TO)
-				cmds[i] = {
-					relative: false,
-					type: SVGPathData.LINE_TO,
-					x: prev.x,
-					y: cmd.y,
-				}
+			newCmds.push(prev ? fixCmd(prev, cmd) || cmd : cmd)
 		}
-		// .filter(c => c.type === SVGPathData.MOVE_TO)
 
-		fontPaths.push(cmds)
-		for (const cmd of cmds) types[cmd.type] = true
+		fontPaths.push(newCmds)
+		for (const cmd of newCmds) types[cmd.type] = true
 	}
-
-	const name = dirent.name.replace(/\.svg$/, "")
 
 	// console.log(name, fontPaths)
 	const glif = toGlif(name, width, getUnicodeHex(name), fontPaths)

@@ -15,9 +15,10 @@ export function getUnicodeHex(name: string) {
 	return num.toString(16).toUpperCase().padStart(4, "0")
 }
 
-export const transformName = (name: string) => {
+const transformName = (name: string) => {
 	if (name.startsWith("_")) return `.${name.slice(1)}`
-	if (name.endsWith("_")) return `${name.slice(0, -1)}.`
+	if (name.endsWith("_")) return name.slice(0, -1)
+	return name
 }
 
 const indentStart = (str: string, count: number) =>
@@ -26,7 +27,7 @@ const indentStart = (str: string, count: number) =>
 		.map(l => "\t".repeat(count) + l)
 		.join("\n")
 
-const round2dp = (num: number) => Math.round(num * 100) / 100
+const round2dp = (num: number) => Math.round(num)
 
 type Point = {
 	x: number
@@ -68,10 +69,13 @@ function getPoints(cmds: SVGCommand[]) {
 
 	const fixedPoints = points.map(fixCoords)
 
-	return fixedPoints.map(
+	const finals = fixedPoints.map(
 		({ x, y, t }) =>
 			`<point x="${round2dp(x * 10)}" y="${round2dp(y * 10)}" ${t ? `type="${t}" ` : ""}/>`
 	)
+
+	if (finals[0] === finals[finals.length - 1]) finals.pop() // remove duplicate point if path is closed
+	return finals
 }
 
 export function toGlif(
@@ -85,12 +89,12 @@ export function toGlif(
 		const lines = getPoints(shape)
 
 		contours.push(`<contour>
-${indentStart(lines.join("\n"), 1)}	
+${indentStart(lines.join("\n"), 1)}
 </contour>`)
 	}
 
 	return `<?xml version="1.0" encoding="UTF-8"?>
-<glyph name="${name}" format="2">
+<glyph name="${transformName(name)}" format="2">
 	<advance width="${round2dp(width * 10)}" />
 	<unicode hex="${unicode}" />
 	<outline>
