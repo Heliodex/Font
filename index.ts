@@ -1,6 +1,7 @@
 import { readdir } from "node:fs/promises"
 import { type SVGCommand, SVGPathData } from "svg-pathdata"
 import { fromXml } from "xast-util-from-xml"
+import { getUnicodeHex, toGlif } from "./glif"
 
 const glyphsPath = "./glyphs"
 
@@ -25,7 +26,9 @@ for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 		throw new Error("Expected svg element")
 
 	// wdc
-	const { children } = node
+	const { children, attributes } = node
+	if (!attributes.width) throw new Error("Expected width attribute")
+	const width = +attributes.width
 
 	// filter out text nodes (mostly just newlines)
 	const cs = children.filter(c => c.type !== "text") as unknown as {
@@ -83,6 +86,10 @@ for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 	const name = dirent.name.replace(/\.svg$/, "")
 
 	// console.log(name, fontPaths)
+	const glif = toGlif(name, width, getUnicodeHex(name), fontPaths)
+	// console.log(glif)
+
+	await Bun.write(`./python/main.ufo/glyphs/${name}.glif`, glif)
 }
 
 console.log(types)
