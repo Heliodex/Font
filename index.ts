@@ -41,6 +41,9 @@ function fixCmd(prev: SVGCommand, cmd: SVGCommand): SVGCommand | undefined {
 for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 	if (!dirent.isFile() || !dirent.name.endsWith(".svg")) continue
 
+	const name = dirent.name.replace(/\.svg$/, "")
+	if (name !== "i") continue
+
 	const svg = await Bun.file(`${glyphsPath}/${dirent.name}`).text()
 	// parse svg
 
@@ -64,18 +67,19 @@ for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 
 	const fontPaths: SVGCommand[][] = []
 
-	const name = dirent.name.replace(/\.svg$/, "")
-
-	for (const p of cs.map(c => c.attributes.d)) {
+	const attrs = cs.map(c => c.attributes.d)
+	for (let i = 0; i < attrs.length; i++) {
+		const p = attrs[i]
 		if (!p) continue // might be ok if it's at the end, but sometimes appears in the middle O_O
 
 		const pd = new SVGPathData(p)
 		if (!pd.commands)
 			throw new Error(`Expected commands from ${p}, got ${pd.commands}`)
 
-		const cmds = pd
-			.round(100)
-			.commands.filter(c => !excludeTypes.includes(c.type))
+		let pdr = pd.round(100)
+		if (i !== 0) pdr = pdr.reverse(true)
+
+		const cmds = pdr.commands.filter(c => !excludeTypes.includes(c.type))
 
 		const newCmds: SVGCommand[] = []
 		for (let i = 0; i < cmds.length; i++) {
@@ -84,6 +88,7 @@ for (const dirent of await readdir(glyphsPath, { withFileTypes: true })) {
 			const prev = newCmds[newCmds.length - 1]
 
 			newCmds.push(prev ? fixCmd(prev, cmd) || cmd : cmd)
+			// newCmds.push(cmd)
 		}
 
 		fontPaths.push(newCmds)
