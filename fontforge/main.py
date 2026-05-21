@@ -1,6 +1,6 @@
 import fontforge
 
-WIDTH_MUL = 40
+WIDTH_MUL = 42
 
 font = fontforge.font()
 
