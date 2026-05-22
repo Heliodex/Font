@@ -13,7 +13,7 @@ font.fontname = "Dex Display"
 print(font)
 
 
-def glyphName(glyph: str, filename: bool) -> str:
+def glyphFilename(glyph: str) -> str:
     if glyph == ".":
         return "period"
 
@@ -37,7 +37,7 @@ kernpairs = json.load(open("./kerning.json", "r"))
 glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.!"
 
 for glyph in glyphs:
-    filename = f"../glyphs/{glyphName(glyph, True)}.svg"
+    filename = f"../glyphs/{glyphFilename(glyph)}.svg"
     file = open(filename, "r")
     width = getWidth(file.readline())
 
@@ -46,8 +46,6 @@ for glyph in glyphs:
 
     # set character width
     c.width = width * WIDTH_MUL
-
-    name = glyphName(glyph, False)
 
 # space
 c = font.createChar(ord(" "))
@@ -63,15 +61,12 @@ def getKernpair(i1: int, i2: int) -> int:
     g1 = glyphsList[i1]
     g2 = glyphsList[i2]
 
-    n1 = glyphName(g1, False)
-    n2 = glyphName(g2, False)
-
-    if n1 not in kernpairs or n2 not in kernpairs[n1]:
+    if g1 not in kernpairs or g2 not in kernpairs[g1]:
         return 0
-    if n1 == "W":
-        print(f"kerning for {n1} and {n2}")
+    if g1 == "W":
+        print(f"kerning for {g1} and {g2}")
 
-    return int(-kernpairs[n1][n2] * WIDTH_MUL / KERN_DIV)
+    return int(-kernpairs[g1][g2] * WIDTH_MUL / KERN_DIV)
 
 
 for i1 in range(len(glyphs)):
