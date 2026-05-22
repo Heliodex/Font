@@ -1,8 +1,10 @@
 import json
 
+import psMat
+
 import fontforge
 
-WIDTH_MUL = 42 # why this number in particular? eh, it closest matches the previous version of the font
+WIDTH_MUL = 42  # why this number in particular? eh, it closest matches the previous version of the font
 KERN_DIV = 10
 
 font = fontforge.font()
@@ -43,7 +45,11 @@ for glyph in glyphs:
     c.importOutlines(filename)
 
     # set character width
+    print(c)
     c.width = width * WIDTH_MUL
+
+    # move glyph down a bit to make it look better
+    c.transform(psMat.translate(0, -3.5 * WIDTH_MUL))
 
 # space
 c = font.createChar(ord(" "))
@@ -62,8 +68,6 @@ def getKernpair(i1: int, i2: int) -> int:
 
     if g1 not in kernpairs or g2 not in kernpairs[g1]:
         return 0
-    if g1 == "W":
-        print(f"kerning for {g1} and {g2}")
 
     return int(-kernpairs[g1][g2] * WIDTH_MUL / KERN_DIV)
 
@@ -89,4 +93,5 @@ font.addKerningClass(
 
 print("generating")
 font.generate("test.ttf")
+font.generate("test.woff2")
 print("generated")

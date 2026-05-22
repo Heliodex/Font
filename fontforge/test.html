@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" style="--font: Dex Display">
+<html lang="en" style="--font: Dex Display2">
 
 <head>
 	<meta charset="UTF-8">
@@ -13,7 +13,7 @@
 		}
 		@font-face {
 			font-family: "Dex Display2";
-			src: url("./test.ttf") format("truetype");
+			src: url("./test.woff2") format("woff2");
 		}
 
 		:root {
@@ -29,10 +29,10 @@
 
 	<script>
 		// every second, change the font-family to Dex Display and back to Dex Display2, to test if the kerning pairs are applied correctly
-		setInterval(() => {
-			const root = document.documentElement
-			root.style.setProperty("--font", root.style.getPropertyValue("--font") === "Dex Display" ? "Dex Display2" : "Dex Display")
-		}, 500)
+		// setInterval(() => {
+		// 	const root = document.documentElement
+		// 	root.style.setProperty("--font", root.style.getPropertyValue("--font") === "Dex Display" ? "Dex Display2" : "Dex Display")
+		// }, 500)
 
 		// reload after 100ms
 		// setTimeout(() => {
@@ -45,9 +45,10 @@
 	<pre>
 Web browsers really do have the best font rendering.
 LT
-AV
-Wz W, W.
-zW ,W .W
+Aj Bj Cj Dj Ej Fj Gj Hj
+Ij Jj Kj Lj Mj Nj Oj Pj
+Qj Rj Sj Tj Uj Vj Wj Xj
+Yj Zj
 	</pre>
 </body>
 
