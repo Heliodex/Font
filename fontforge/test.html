@@ -9,6 +9,10 @@
 	<style>
 		@font-face {
 			font-family: "Dex Display";
+			src: url("./DexDisplay.ttf") format("truetype");
+		}
+		@font-face {
+			font-family: "Dex Display2";
 			src: url("./test.ttf") format("truetype");
 		}
 
@@ -25,15 +29,15 @@
 
 	<script>
 		// every second, change the font-family to Dex Display and back to Dex Display2, to test if the kerning pairs are applied correctly
-		// setInterval(() => {
-		// 	const root = document.documentElement
-		// 	root.style.setProperty("--font", root.style.getPropertyValue("--font") === "Dex Display" ? "Dex Display2" : "Dex Display")
-		// }, 500)
+		setInterval(() => {
+			const root = document.documentElement
+			root.style.setProperty("--font", root.style.getPropertyValue("--font") === "Dex Display" ? "Dex Display2" : "Dex Display")
+		}, 500)
 
 		// reload after 100ms
-		setTimeout(() => {
-			location.reload()
-		}, 250)
+		// setTimeout(() => {
+		// 	location.reload()
+		// }, 250)
 	</script>
 </head>
 

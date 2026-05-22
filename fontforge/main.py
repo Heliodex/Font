@@ -2,7 +2,7 @@ import json
 
 import fontforge
 
-WIDTH_MUL = 40
+WIDTH_MUL = 42 # why this number in particular? eh, it closest matches the previous version of the font
 KERN_DIV = 10
 
 font = fontforge.font()
@@ -18,7 +18,7 @@ def glyphFilename(glyph: str) -> str:
         return "period"
 
     isUppercase = glyph.isupper()
-    if isUppercase and filename:
+    if isUppercase:
         return f"{glyph}_"
     return glyph
 
@@ -51,16 +51,14 @@ c.width = 5 * WIDTH_MUL
 
 ### KERNING
 
-glyphsList = list(glyphs)
-
-offsets = [0] * len(glyphsList) ** 2
+offsets = [0] * len(glyphs) ** 2
 
 kernpairs = json.load(open("./kerning.json", "r"))
 
 
 def getKernpair(i1: int, i2: int) -> int:
-    g1 = glyphsList[i1]
-    g2 = glyphsList[i2]
+    g1 = glyphs[i1]
+    g2 = glyphs[i2]
 
     if g1 not in kernpairs or g2 not in kernpairs[g1]:
         return 0
@@ -77,8 +75,16 @@ for i1 in range(len(glyphs)):
 offsetsTuple = tuple(offsets)
 
 font.addLookup("kern", "gpos_pair", None, [("kern", [("latn", ["dflt"])])])
+
+glyphNameMap = {
+    ".": "period",
+    ",": "comma",
+    "!": "exclam",
+}
+glyphNames = [glyphNameMap.get(glyph, glyph) for glyph in glyphs]
+
 font.addKerningClass(
-    "kern", "kern-1", tuple(glyphsList), tuple(glyphsList), tuple(offsetsTuple)
+    "kern", "kern-1", tuple(glyphNames), tuple(glyphNames), tuple(offsetsTuple)
 )
 
 print("generating")
