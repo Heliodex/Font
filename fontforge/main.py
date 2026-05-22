@@ -32,8 +32,6 @@ def getWidth(line: str) -> int:
     return int(line[start:end])
 
 
-kernpairs = json.load(open("./kerning.json", "r"))
-
 glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.!"
 
 for glyph in glyphs:
@@ -51,10 +49,13 @@ for glyph in glyphs:
 c = font.createChar(ord(" "))
 c.width = 5 * WIDTH_MUL
 
-# add kerning time
+### KERNING
+
 glyphsList = list(glyphs)
 
 offsets = [0] * len(glyphsList) ** 2
+
+kernpairs = json.load(open("./kerning.json", "r"))
 
 
 def getKernpair(i1: int, i2: int) -> int:
