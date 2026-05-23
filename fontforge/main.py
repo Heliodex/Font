@@ -18,6 +18,22 @@ print(font)
 def glyphFilename(glyph: str) -> str:
     if glyph == ".":
         return "period"
+    if glyph == ",":
+        return "comma"
+    if glyph == "!":
+        return "exclam"
+    if glyph == "-":
+        return "hyphen"
+    if glyph == "–":
+        return "endash"
+    if glyph == "—":
+        return "emdash"
+    if glyph == ":":
+        return "colon"
+    if glyph == ";":
+        return "semicolon"
+    if glyph == "|":
+        return "pipe"
 
     isUppercase = glyph.isupper()
     if isUppercase:
@@ -34,7 +50,7 @@ def getWidth(line: str) -> int:
     return int(line[start:end])
 
 
-glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.!"
+glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.!-–—:;|"
 
 for glyph in glyphs:
     filename = f"../glyphs/{glyphFilename(glyph)}.svg"
@@ -42,10 +58,10 @@ for glyph in glyphs:
     width = getWidth(file.readline())
 
     c = font.createChar(ord(glyph))
+    c.glyphname = glyphFilename(glyph)
     c.importOutlines(filename)
 
     # set character width
-    print(c)
     c.width = width * WIDTH_MUL
 
     # move glyph down a bit to make it look better
@@ -80,12 +96,7 @@ offsetsTuple = tuple(offsets)
 
 font.addLookup("kern", "gpos_pair", None, [("kern", [("latn", ["dflt"])])])
 
-glyphNameMap = {
-    ".": "period",
-    ",": "comma",
-    "!": "exclam",
-}
-glyphNames = [glyphNameMap.get(glyph, glyph) for glyph in glyphs]
+glyphNames = [glyphFilename(glyph) for glyph in glyphs]
 
 font.addKerningClass(
     "kern", "kern-1", tuple(glyphNames), tuple(glyphNames), tuple(offsetsTuple)
