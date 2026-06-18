@@ -16,7 +16,7 @@ print(font)
 
 ZBALERMORNA_BASE = 0xED00
 
-zbalermornaMatch = {
+zbalermornaMain = {
     0x89: "denpabu",
     0x8A: "yhy",
     0x8B: "cnimahobu",
@@ -38,7 +38,9 @@ zbalermornaMatch = {
     0x95: "zy",
     0x96: "jy",
     0x97: "ny",
-    #
+}
+
+zbalermornaDiacriticsTop = {
     0xA0: "abu",
     0xA1: "ebu",
     0xA2: "ibu",
@@ -49,14 +51,23 @@ zbalermornaMatch = {
     0xA7: "eibu",
     0xA8: "oibu",
     0xA9: "aubu",
-    #
-    # 0x9A: "slakabu",
+}
+
+zbalermornaDiacriticsBottom = {
     0x8C: "patonga",
     0x8D: "retonga",
     0x8E: "citonga",
     0x8F: "votonga",
     0x98: "bahebu",
     0x9B: "tcenabu",
+}
+
+zbalermornaMatch = {
+    **zbalermornaMain,
+    **zbalermornaDiacriticsTop,
+    **zbalermornaDiacriticsBottom,
+    #
+    # 0x9A: "slakabu",
     0x99: "smajibu",
 }
 
@@ -157,9 +168,35 @@ font.addLookup("kern", "gpos_pair", None, [("kern", [("latn", ["dflt"])])])
 
 glyphNames = [glyphFilename(glyph) for glyph in glyphs]
 
-font.addKerningClass(
-    "kern", "kern-1", tuple(glyphNames), tuple(glyphNames), tuple(offsetsTuple)
-)
+font.addKerningClass("kern", "kern-1", glyphNames, glyphNames, offsetsTuple)
+
+### DIACRITICS
+
+# each zbalermornaMain can be combined with each zbalermornaDiacritics
+
+mainAnchorPos = (0 * WIDTH_MUL, 0 * WIDTH_MUL)
+diacriticAnchorPos = (0 * WIDTH_MUL, 0 * WIDTH_MUL)
+
+for mainChar in zbalermornaMain.values():
+    mainGlyph = font[mainChar]
+    mainGlyph.addAnchorPoint("main", "base", *diacriticAnchorPos)
+
+for diacriticChar in zbalermornaDiacriticsTop.values():
+    diacriticGlyph = font[diacriticChar]
+    diacriticGlyph.addAnchorPoint("top", "mark", *diacriticAnchorPos)
+
+for diacriticChar in zbalermornaDiacriticsBottom.values():
+    diacriticGlyph = font[diacriticChar]
+    diacriticGlyph.addAnchorPoint("bottom", "mark", *diacriticAnchorPos)
+
+
+font.addLookup("mk", "gpos_mark2base", None, [("mark", [("puaa", ["dflt"])])])
+font.addLookupSubtable("mk", "mk1")
+
+font.addAnchorClass("mk1", "top")
+font.addAnchorClass("mk1", "bottom")
+
+### FINISH
 
 print("generating")
 font.generate("test.ttf")
