@@ -164,7 +164,7 @@ for i1 in range(len(glyphs)):
 
 offsetsTuple = tuple(offsets)
 
-font.addLookup("kern", "gpos_pair", None, [("kern", [("latn", ["dflt"])])])
+font.addLookup("kern", "gpos_pair", None, [("kern", [("dflt", ["dflt"])])])
 
 glyphNames = [glyphFilename(glyph) for glyph in glyphs]
 
@@ -174,12 +174,19 @@ font.addKerningClass("kern", "kern-1", glyphNames, glyphNames, offsetsTuple)
 
 # each zbalermornaMain can be combined with each zbalermornaDiacritics
 
-mainAnchorPos = (0 * WIDTH_MUL, 0 * WIDTH_MUL)
-diacriticAnchorPos = (0 * WIDTH_MUL, 0 * WIDTH_MUL)
+mainAnchorPos = (50 * WIDTH_MUL, 20 * WIDTH_MUL)
+diacriticAnchorPos = (50 * WIDTH_MUL, 0 * WIDTH_MUL)
+
+font.addLookup("mk", "gpos_mark2base", None, [("mark", [("dflt", ["dflt"])])])
+
+font.addLookupSubtable("mk", "mk1")
+
+font.addAnchorClass("mk1", "top")
+font.addAnchorClass("mk1", "bottom")
 
 for mainChar in zbalermornaMain.values():
     mainGlyph = font[mainChar]
-    mainGlyph.addAnchorPoint("main", "base", *diacriticAnchorPos)
+    mainGlyph.addAnchorPoint("main", "base", *mainAnchorPos)
 
 for diacriticChar in zbalermornaDiacriticsTop.values():
     diacriticGlyph = font[diacriticChar]
@@ -189,12 +196,6 @@ for diacriticChar in zbalermornaDiacriticsBottom.values():
     diacriticGlyph = font[diacriticChar]
     diacriticGlyph.addAnchorPoint("bottom", "mark", *diacriticAnchorPos)
 
-
-font.addLookup("mk", "gpos_mark2base", None, [("mark", [("puaa", ["dflt"])])])
-font.addLookupSubtable("mk", "mk1")
-
-font.addAnchorClass("mk1", "top")
-font.addAnchorClass("mk1", "bottom")
 
 ### FINISH
 
