@@ -174,9 +174,6 @@ font.addKerningClass("kern", "kern-1", glyphNames, glyphNames, offsetsTuple)
 
 # each zbalermornaMain can be combined with each zbalermornaDiacritics
 
-mainAnchorPos = (50 * WIDTH_MUL, 20 * WIDTH_MUL)
-diacriticAnchorPos = (50 * WIDTH_MUL, 0 * WIDTH_MUL)
-
 font.addLookup("mk", "gpos_mark2base", None, [("mark", [("dflt", ["dflt"])])])
 
 font.addLookupSubtable("mk", "mk1")
@@ -186,15 +183,18 @@ font.addAnchorClass("mk1", "bottom")
 
 for mainChar in zbalermornaMain.values():
     mainGlyph = font[mainChar]
-    mainGlyph.addAnchorPoint("main", "base", *mainAnchorPos)
+    mainGlyph.addAnchorPoint("top", "base", 0, 0)
+    mainGlyph.addAnchorPoint("bottom", "base", 0, 0)
 
 for diacriticChar in zbalermornaDiacriticsTop.values():
     diacriticGlyph = font[diacriticChar]
-    diacriticGlyph.addAnchorPoint("top", "mark", *diacriticAnchorPos)
+    diacriticGlyph.glyphclass = "mark"
+    diacriticGlyph.addAnchorPoint("top", "mark", 0, 0)
 
 for diacriticChar in zbalermornaDiacriticsBottom.values():
     diacriticGlyph = font[diacriticChar]
-    diacriticGlyph.addAnchorPoint("bottom", "mark", *diacriticAnchorPos)
+    diacriticGlyph.glyphclass = "mark"
+    diacriticGlyph.addAnchorPoint("bottom", "mark", 0, 0)
 
 
 ### FINISH
