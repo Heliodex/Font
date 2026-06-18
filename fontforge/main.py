@@ -73,7 +73,6 @@ zbalermornaMatch = {
 
 
 def glyphZbalermorna(glyph: str) -> str:
-
     og = ord(glyph)
     ogbase = og - ZBALERMORNA_BASE
     if ogbase in zbalermornaMatch:
@@ -181,20 +180,38 @@ font.addLookupSubtable("mk", "mk1")
 font.addAnchorClass("mk1", "top")
 font.addAnchorClass("mk1", "bottom")
 
-for mainChar in zbalermornaMain.values():
-    mainGlyph = font[mainChar]
-    mainGlyph.addAnchorPoint("top", "base", 0, 0)
-    mainGlyph.addAnchorPoint("bottom", "base", 0, 0)
+diacriticpos = json.load(open("./diacritics.json", "r"))
 
-for diacriticChar in zbalermornaDiacriticsTop.values():
-    diacriticGlyph = font[diacriticChar]
-    diacriticGlyph.glyphclass = "mark"
-    diacriticGlyph.addAnchorPoint("top", "mark", 0, 0)
 
-for diacriticChar in zbalermornaDiacriticsBottom.values():
-    diacriticGlyph = font[diacriticChar]
-    diacriticGlyph.glyphclass = "mark"
-    diacriticGlyph.addAnchorPoint("bottom", "mark", 0, 0)
+def getDiacriticOffset(d: str) -> int:
+    if d not in diacriticpos:
+        return 0
+
+    return int(diacriticpos[d] * WIDTH_MUL)
+
+
+OFFSET = 2 * WIDTH_MUL
+
+for mc in zbalermornaMain.values():
+    mg = font[mc]
+    w = (mg.width - OFFSET) / 2  - getDiacriticOffset(mc)
+
+    mg.addAnchorPoint("top", "base", w, 0)
+    mg.addAnchorPoint("bottom", "base", w, 0)
+
+for dc in zbalermornaDiacriticsTop.values():
+    dg = font[dc]
+    w = (dg.width - OFFSET) / 2  - getDiacriticOffset(dc)
+
+    dg.glyphclass = "mark"
+    dg.addAnchorPoint("top", "mark", w, 0)
+
+for dc in zbalermornaDiacriticsBottom.values():
+    dg = font[dc]
+    w = (dg.width - OFFSET) / 2  - getDiacriticOffset(dc)
+
+    dg.glyphclass = "mark"
+    dg.addAnchorPoint("bottom", "mark", w, 0)
 
 
 ### FINISH
