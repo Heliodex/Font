@@ -14,26 +14,82 @@ font.fontname = "Dex Display"
 
 print(font)
 
+ZBALERMORNA_BASE = 0xED00
+
+zbalermornaMatch = {
+    0x89: "denpabu",
+    0x8A: "yhy",
+    0x8B: "cnimahobu",
+    #
+    0x80: "py",
+    0x81: "ty",
+    0x82: "ky",
+    0x83: "fy",
+    0x84: "ly",
+    0x85: "sy",
+    0x86: "cy",
+    0x87: "my",
+    0x88: "xy",
+    0x90: "by",
+    0x91: "dy",
+    0x92: "gy",
+    0x93: "vy",
+    0x94: "ry",
+    0x95: "zy",
+    0x96: "jy",
+    0x97: "ny",
+    #
+    0xA0: "abu",
+    0xA1: "ebu",
+    0xA2: "ibu",
+    0xA3: "obu",
+    0xA4: "ubu",
+    0xA5: "ybu",
+    0xA6: "aibu",
+    0xA7: "eibu",
+    0xA8: "oibu",
+    0xA9: "aubu",
+    #
+    # 0x9A: "slakabu",
+    0x8C: "patonga",
+    0x8D: "retonga",
+    0x8E: "citonga",
+    0x8F: "votonga",
+    0x98: "bahebu",
+    0x9B: "tcenabu",
+    0x99: "smajibu",
+}
+
+
+def glyphZbalermorna(glyph: str) -> str:
+
+    og = ord(glyph)
+    ogbase = og - ZBALERMORNA_BASE
+    if ogbase in zbalermornaMatch:
+        return zbalermornaMatch[ogbase]
+
+    raise Exception(f"Unknown Zbalermorna glyph: {glyph} (ord: {og})")
+
+
+latinMatch = {
+    ".": "period",
+    ",": "comma",
+    "!": "exclam",
+    "-": "hyphen",
+    "–": "endash",
+    "—": "emdash",
+    ":": "colon",
+    ";": "semicolon",
+    "|": "pipe",
+}
+
 
 def glyphFilename(glyph: str) -> str:
-    if glyph == ".":
-        return "period"
-    if glyph == ",":
-        return "comma"
-    if glyph == "!":
-        return "exclam"
-    if glyph == "-":
-        return "hyphen"
-    if glyph == "–":
-        return "endash"
-    if glyph == "—":
-        return "emdash"
-    if glyph == ":":
-        return "colon"
-    if glyph == ";":
-        return "semicolon"
-    if glyph == "|":
-        return "pipe"
+    if 0xED80 <= ord(glyph) < 0xEDC0:
+        return glyphZbalermorna(glyph)
+
+    if glyph in latinMatch:
+        return latinMatch[glyph]
 
     isUppercase = glyph.isupper()
     if isUppercase:
@@ -50,7 +106,10 @@ def getWidth(line: str) -> int:
     return int(line[start:end])
 
 
-glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.!-–—:;|"
+glyphs_latin = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.!-–—:;|"
+glyphs_zbalermorna = "".join(chr(i + ZBALERMORNA_BASE) for i in zbalermornaMatch.keys())
+
+glyphs = glyphs_latin + glyphs_zbalermorna
 
 for glyph in glyphs:
     filename = f"../glyphs/{glyphFilename(glyph)}.svg"
