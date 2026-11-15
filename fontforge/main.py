@@ -20,7 +20,6 @@ zbalermornaMain = {
     0x89: "denpabu",
     0x8A: "yhy",
     0x8B: "cnimahobu",
-    #
     0x80: "py",
     0x81: "ty",
     0x82: "ky",
@@ -117,7 +116,7 @@ def getWidth(line: str) -> int:
 
 
 glyphs_latin = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,.!-–—:;|"
-glyphs_zbalermorna = "".join(chr(i + ZBALERMORNA_BASE) for i in zbalermornaMatch.keys())
+glyphs_zbalermorna = "".join(chr(i + ZBALERMORNA_BASE) for i in zbalermornaMatch)
 
 glyphs = glyphs_latin + glyphs_zbalermorna
 
