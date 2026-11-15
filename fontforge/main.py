@@ -122,18 +122,18 @@ glyphs = glyphs_latin + glyphs_zbalermorna
 
 for glyph in glyphs:
     filename = f"../glyphs/{glyphFilename(glyph)}.svg"
-    file = open(filename, "r")
-    width = getWidth(file.readline())
+    with open(filename, "r") as file:
+        width = getWidth(file.readline())
 
-    c = font.createChar(ord(glyph))
-    c.glyphname = glyphFilename(glyph)
-    c.importOutlines(filename)
+        c = font.createChar(ord(glyph))
+        c.glyphname = glyphFilename(glyph)
+        c.importOutlines(filename)
 
-    # set character width
-    c.width = width * WIDTH_MUL
+        # set character width
+        c.width = width * WIDTH_MUL
 
-    # move glyph down a bit to make it look better
-    c.transform(psMat.translate(0, -3.5 * WIDTH_MUL))
+        # move glyph down a bit to make it look better
+        c.transform(psMat.translate(0, -3.5 * WIDTH_MUL))
 
 # space
 c = font.createChar(ord(" "))
@@ -193,21 +193,21 @@ OFFSET = 2 * WIDTH_MUL
 
 for mc in zbalermornaMain.values():
     mg = font[mc]
-    w = (mg.width - OFFSET) / 2  - getDiacriticOffset(mc)
+    w = (mg.width - OFFSET) / 2 - getDiacriticOffset(mc)
 
     mg.addAnchorPoint("top", "base", w, 0)
     mg.addAnchorPoint("bottom", "base", w, 0)
 
 for dc in zbalermornaDiacriticsTop.values():
     dg = font[dc]
-    w = (dg.width - OFFSET) / 2  - getDiacriticOffset(dc)
+    w = (dg.width - OFFSET) / 2 - getDiacriticOffset(dc)
 
     dg.glyphclass = "mark"
     dg.addAnchorPoint("top", "mark", w, 0)
 
 for dc in zbalermornaDiacriticsBottom.values():
     dg = font[dc]
-    w = (dg.width - OFFSET) / 2  - getDiacriticOffset(dc)
+    w = (dg.width - OFFSET) / 2 - getDiacriticOffset(dc)
 
     dg.glyphclass = "mark"
     dg.addAnchorPoint("bottom", "mark", w, 0)
