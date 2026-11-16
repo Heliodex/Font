@@ -70,6 +70,14 @@ zbalermornaMatch = {
     0x99: "smajibu",
 }
 
+# Diphthongs are typed as two separate vowel diacritics, but written as a single combined diacritic. Map each combination to the glyph that should replace it.
+zbalermornaDiphthongs = {
+    "aibu": ("abu", "ibu"),
+    "eibu": ("ebu", "ibu"),
+    "oibu": ("obu", "ibu"),
+    "aubu": ("abu", "ubu"),
+}
+
 
 def glyphZbalermorna(glyph: str) -> str:
     og = ord(glyph)
@@ -211,6 +219,20 @@ for dc in zbalermornaDiacriticsBottom.values():
 
     dg.glyphclass = "mark"
     dg.addAnchorPoint("bottom", "mark", w, 0)
+
+### DIPHTHONGS
+
+# Replace a pair of stacked vowel diacritics with the combined diphthong glyph. ccmp is always applied for combining marks; liga is included too so that the substitution also happens in shapers which only apply standard ligatures.
+font.addLookup(
+    "diphthongs",
+    "gsub_ligature",
+    None,
+    (("ccmp", (("dflt", ("dflt")),)), ("liga", (("dflt", ("dflt")),))),
+)
+font.addLookupSubtable("diphthongs", "diphthongs1")
+
+for ligature, components in zbalermornaDiphthongs.items():
+    font[ligature].addPosSub("diphthongs1", components)
 
 
 ### FINISH
