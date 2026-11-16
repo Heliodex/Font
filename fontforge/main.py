@@ -177,9 +177,9 @@ bahebuDotDrop = 2.5 * WIDTH_MUL
 bahebuLigaturePositions = {
     "bahebu_bahebu": ((-bahebuDotSeparation, 0), (bahebuDotSeparation, 0)),
     "bahebu_bahebu_bahebu": (
-        (-bahebuDotSeparation, -bahebuDotDrop),
-        (bahebuDotSeparation, -bahebuDotDrop),
-        (0, 0),
+        (-bahebuDotSeparation, 0),
+        (bahebuDotSeparation, 0),
+        (0, -bahebuDotDrop),
     ),
 }
 for name, positions in bahebuLigaturePositions.items():
@@ -188,17 +188,45 @@ for name, positions in bahebuLigaturePositions.items():
     for dx, dy in positions:
         combined.addReference("bahebu", (1, 0, 0, 1, dx, dy))
 
-# Stretch the underline to a full letter width and drop it below descenders.
+# The stretch underline spans a full cell. It stays at underline height and
+# leaves a gap where a descender would cross it.
 tcenabu = font["tcenabu"]
-tcenabu.transform(psMat.scale(10 * WIDTH_MUL / tcenabu.boundingBox()[2], 1))
-tcenabu.width = 10 * WIDTH_MUL
-tcenabu.transform(psMat.translate(0, -5 * WIDTH_MUL))
+tcenabuBarWidth = 10 * WIDTH_MUL
+tcenabu.transform(psMat.scale(tcenabuBarWidth / tcenabu.boundingBox()[2], 1))
+tcenabu.width = tcenabuBarWidth
+tcenabu.transform(psMat.translate(0, -0.5 * WIDTH_MUL))
+
+
+def createTcenabuVariant(
+    name: str, segments: list[tuple[float, float]], width: float
+) -> None:
+    variant = font.createChar(-1, name)
+    variant.width = width
+
+    for start, end in segments:
+        variant.addReference(
+            "tcenabu",
+            ((end - start) / tcenabuBarWidth, 0, 0, 1, start, 0),
+        )
+
 
 # Narrow letters need narrower underlines so they still meet the next one.
 for name, units in {"tcenabu.narrow": 4, "tcenabu.mid": 9}.items():
-    variant = font.createChar(-1, name)
-    variant.width = units * WIDTH_MUL
-    variant.addReference("tcenabu", (units / 10, 0, 0, 1, 0, 0))
+    createTcenabuVariant(name, [(0, units * WIDTH_MUL)], units * WIDTH_MUL)
+
+# Skip over the descenders on the right- and left-sided letters.
+rightDescenderGap = (5.25 * WIDTH_MUL, 8.75 * WIDTH_MUL)
+leftDescenderGapEnd = 2.75 * WIDTH_MUL
+createTcenabuVariant(
+    "tcenabu.skipRight",
+    [(0, rightDescenderGap[0]), (rightDescenderGap[1], tcenabuBarWidth)],
+    tcenabuBarWidth,
+)
+createTcenabuVariant(
+    "tcenabu.skipLeft",
+    [(leftDescenderGapEnd, tcenabuBarWidth)],
+    tcenabuBarWidth,
+)
 
 ### KERNING
 
@@ -287,7 +315,13 @@ for dc in [*zbalermornaDiacriticsBottom.values(), *zbalermornaBahebuLigatures]:
     dg.glyphclass = "mark"
     dg.addAnchorPoint("bottom", "mark", w, 0)
 
-for name in ["tcenabu", "tcenabu.narrow", "tcenabu.mid"]:
+for name in [
+    "tcenabu",
+    "tcenabu.narrow",
+    "tcenabu.mid",
+    "tcenabu.skipRight",
+    "tcenabu.skipLeft",
+]:
     tcenabuVariant = font[name]
     tcenabuVariant.glyphclass = "mark"
     tcenabuVariant.addAnchorPoint("extension", "mark", 0, 0)
@@ -328,6 +362,14 @@ font.addLookup("tcenabuMid", "gsub_single", None, ())
 font.addLookupSubtable("tcenabuMid", "tcenabuMid1")
 font["tcenabu"].addPosSub("tcenabuMid1", "tcenabu.mid")
 
+font.addLookup("tcenabuSkipRight", "gsub_single", None, ())
+font.addLookupSubtable("tcenabuSkipRight", "tcenabuSkipRight1")
+font["tcenabu"].addPosSub("tcenabuSkipRight1", "tcenabu.skipRight")
+
+font.addLookup("tcenabuSkipLeft", "gsub_single", None, ())
+font.addLookupSubtable("tcenabuSkipLeft", "tcenabuSkipLeft1")
+font["tcenabu"].addPosSub("tcenabuSkipLeft1", "tcenabu.skipLeft")
+
 font.addLookup(
     "tcenabuContext",
     "gsub_contextchain",
@@ -359,6 +401,30 @@ font.addContextualSubtable(
     "tcenabuCtxMid2",
     "coverage",
     "[ly ry cnimahobu] | [tcenabu] @<tcenabuMid>",
+)
+font.addContextualSubtable(
+    "tcenabuContext",
+    "tcenabuCtxSkipRight1",
+    "coverage",
+    f"[by dy gy] [{vowels}] | [tcenabu] @<tcenabuSkipRight>",
+)
+font.addContextualSubtable(
+    "tcenabuContext",
+    "tcenabuCtxSkipRight2",
+    "coverage",
+    "[by dy gy] | [tcenabu] @<tcenabuSkipRight>",
+)
+font.addContextualSubtable(
+    "tcenabuContext",
+    "tcenabuCtxSkipLeft1",
+    "coverage",
+    f"[zy jy] [{vowels}] | [tcenabu] @<tcenabuSkipLeft>",
+)
+font.addContextualSubtable(
+    "tcenabuContext",
+    "tcenabuCtxSkipLeft2",
+    "coverage",
+    "[zy jy] | [tcenabu] @<tcenabuSkipLeft>",
 )
 
 
