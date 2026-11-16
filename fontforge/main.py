@@ -78,6 +78,22 @@ zbalermornaDiphthongs = {
     "aubu": ("abu", "ubu"),
 }
 
+# Multiple stress dots are drawn as one of the combined dynamics glyphs.
+zbalermornaBahebuLigatures = {
+    "bahebu_bahebu_bahebu": ("bahebu", "bahebu", "bahebu"),
+    "bahebu_bahebu": ("bahebu", "bahebu"),
+}
+
+# Below-base marks use different horizontal offsets from the vowel diacritics.
+# These keep the marks clear of the descenders on these letters.
+zbalermornaBottomOffsets = {
+    "by": 2,
+    "dy": 2,
+    "gy": 2,
+    "zy": 0,
+    "jy": 0,
+}
+
 
 def glyphZbalermorna(glyph: str) -> str:
     og = ord(glyph)
@@ -147,6 +163,43 @@ for glyph in glyphs:
 c = font.createChar(ord(" "))
 c.width = 5 * WIDTH_MUL
 
+### SYMBOLS
+
+# Make the silence line fill its advance so consecutive lines join up.
+smajibu = font["smajibu"]
+smajibuWidth = smajibu.width
+smajibu.transform(psMat.scale(smajibuWidth / smajibu.boundingBox()[2], 1))
+smajibu.width = smajibuWidth
+
+# The stress dot gains combined two- and three-dot forms.
+bahebuDotSeparation = 1.5 * WIDTH_MUL
+bahebuDotDrop = 2.5 * WIDTH_MUL
+bahebuLigaturePositions = {
+    "bahebu_bahebu": ((-bahebuDotSeparation, 0), (bahebuDotSeparation, 0)),
+    "bahebu_bahebu_bahebu": (
+        (-bahebuDotSeparation, -bahebuDotDrop),
+        (bahebuDotSeparation, -bahebuDotDrop),
+        (0, 0),
+    ),
+}
+for name, positions in bahebuLigaturePositions.items():
+    combined = font.createChar(-1, name)
+    combined.width = font["bahebu"].width
+    for dx, dy in positions:
+        combined.addReference("bahebu", (1, 0, 0, 1, dx, dy))
+
+# Stretch the underline to a full letter width and drop it below descenders.
+tcenabu = font["tcenabu"]
+tcenabu.transform(psMat.scale(10 * WIDTH_MUL / tcenabu.boundingBox()[2], 1))
+tcenabu.width = 10 * WIDTH_MUL
+tcenabu.transform(psMat.translate(0, -5 * WIDTH_MUL))
+
+# Narrow letters need narrower underlines so they still meet the next one.
+for name, units in {"tcenabu.narrow": 4, "tcenabu.mid": 9}.items():
+    variant = font.createChar(-1, name)
+    variant.width = units * WIDTH_MUL
+    variant.addReference("tcenabu", (units / 10, 0, 0, 1, 0, 0))
+
 ### KERNING
 
 offsets = [0] * len(glyphs) ** 2
@@ -186,6 +239,7 @@ font.addLookupSubtable("mk", "mk1")
 
 font.addAnchorClass("mk1", "top")
 font.addAnchorClass("mk1", "bottom")
+font.addAnchorClass("mk1", "extension")
 
 diacriticpos = json.load(open("./diacritics.json", "r"))
 
@@ -197,14 +251,24 @@ def getDiacriticOffset(d: str) -> int:
     return int(diacriticpos[d] * WIDTH_MUL)
 
 
+def getBottomDiacriticOffset(d: str) -> int:
+    if d in zbalermornaBottomOffsets:
+        return int(zbalermornaBottomOffsets[d] * WIDTH_MUL)
+
+    return getDiacriticOffset(d)
+
+
 OFFSET = 2 * WIDTH_MUL
+BOTTOM_DROP = 0.5 * WIDTH_MUL
 
 for mc in zbalermornaMain.values():
     mg = font[mc]
-    w = (mg.width - OFFSET) / 2 - getDiacriticOffset(mc)
+    wTop = (mg.width - OFFSET) / 2 - getDiacriticOffset(mc)
+    wBottom = (mg.width - OFFSET) / 2 - getBottomDiacriticOffset(mc)
 
-    mg.addAnchorPoint("top", "base", w, 0)
-    mg.addAnchorPoint("bottom", "base", w, 0)
+    mg.addAnchorPoint("top", "base", wTop, 0)
+    mg.addAnchorPoint("bottom", "base", wBottom, -BOTTOM_DROP)
+    mg.addAnchorPoint("extension", "base", 0, 0)
 
 for dc in zbalermornaDiacriticsTop.values():
     dg = font[dc]
@@ -213,14 +277,22 @@ for dc in zbalermornaDiacriticsTop.values():
     dg.glyphclass = "mark"
     dg.addAnchorPoint("top", "mark", w, 0)
 
-for dc in zbalermornaDiacriticsBottom.values():
+for dc in [*zbalermornaDiacriticsBottom.values(), *zbalermornaBahebuLigatures]:
+    if dc == "tcenabu":
+        continue
+
     dg = font[dc]
     w = (dg.width - OFFSET) / 2 - getDiacriticOffset(dc)
 
     dg.glyphclass = "mark"
     dg.addAnchorPoint("bottom", "mark", w, 0)
 
-### DIPHTHONGS
+for name in ["tcenabu", "tcenabu.narrow", "tcenabu.mid"]:
+    tcenabuVariant = font[name]
+    tcenabuVariant.glyphclass = "mark"
+    tcenabuVariant.addAnchorPoint("extension", "mark", 0, 0)
+
+### LIGATURES
 
 # Replace a pair of stacked vowel diacritics with the combined diphthong glyph. ccmp is always applied for combining marks; liga is included too so that the substitution also happens in shapers which only apply standard ligatures.
 font.addLookup(
@@ -233,6 +305,61 @@ font.addLookupSubtable("diphthongs", "diphthongs1")
 
 for ligature, components in zbalermornaDiphthongs.items():
     font[ligature].addPosSub("diphthongs1", components)
+
+# Combine consecutive stress dots into the two- and three-dot glyphs. The
+# three-dot ligature comes first so that it wins over the two-dot one.
+font.addLookup(
+    "bahebuLigatures",
+    "gsub_ligature",
+    None,
+    (("ccmp", (("dflt", ("dflt")),)), ("liga", (("dflt", ("dflt")),))),
+)
+font.addLookupSubtable("bahebuLigatures", "bahebuLigatures1")
+
+for ligature, components in zbalermornaBahebuLigatures.items():
+    font[ligature].addPosSub("bahebuLigatures1", components)
+
+# Pick an underline width that matches the letter it follows.
+font.addLookup("tcenabuNarrow", "gsub_single", None, ())
+font.addLookupSubtable("tcenabuNarrow", "tcenabuNarrow1")
+font["tcenabu"].addPosSub("tcenabuNarrow1", "tcenabu.narrow")
+
+font.addLookup("tcenabuMid", "gsub_single", None, ())
+font.addLookupSubtable("tcenabuMid", "tcenabuMid1")
+font["tcenabu"].addPosSub("tcenabuMid1", "tcenabu.mid")
+
+font.addLookup(
+    "tcenabuContext",
+    "gsub_contextchain",
+    None,
+    (("ccmp", (("dflt", ("dflt")),)), ("liga", (("dflt", ("dflt")),))),
+)
+
+vowels = " ".join(zbalermornaDiacriticsTop.values())
+font.addContextualSubtable(
+    "tcenabuContext",
+    "tcenabuCtxNarrow1",
+    "coverage",
+    f"[denpabu yhy] [{vowels}] | [tcenabu] @<tcenabuNarrow>",
+)
+font.addContextualSubtable(
+    "tcenabuContext",
+    "tcenabuCtxNarrow2",
+    "coverage",
+    "[denpabu yhy] | [tcenabu] @<tcenabuNarrow>",
+)
+font.addContextualSubtable(
+    "tcenabuContext",
+    "tcenabuCtxMid1",
+    "coverage",
+    f"[ly ry cnimahobu] [{vowels}] | [tcenabu] @<tcenabuMid>",
+)
+font.addContextualSubtable(
+    "tcenabuContext",
+    "tcenabuCtxMid2",
+    "coverage",
+    "[ly ry cnimahobu] | [tcenabu] @<tcenabuMid>",
+)
 
 
 ### FINISH
